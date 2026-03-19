@@ -13,10 +13,10 @@
 > **你的工作流程如下：**
 >
 > 1. **理解阶段**：先阅读所有文档，指出潜在冲突。
-> 2. **执行阶段**：严格按照 `TASK.md` 的 Phase 顺序执行。
-> 3. **合规检查**：每完成一个任务，必须对照 `CONVENTIONS.md` 自检。
-> 4. **实时同步**：更新 `TASK.md` 进度后再进行下一步。
-> 5. **特别注意**：本项目采用 React 19 + TanStack Router，请确保所有路由和数据流都是类型安全的。"
+> 2. **环境自检**：检查是否已启用 **Figma MCP**。如果已启用，请在生成 UI 代码前调用 MCP 读取设计稿。
+> 3. **执行阶段**：严格按照 `TASK.md` 的 Phase 顺序执行。
+> 4. **合规检查**：每完成一个任务，必须对照 `CONVENTIONS.md` 自检。
+> 5. **实时同步**：更新 `TASK.md` 进度后再进行下一步。"
 
 ---
 
@@ -28,19 +28,14 @@
 # 项目名称：[输入项目名] - 企业级后台管理系统
 
 ## 1. 业务目标
-[例如：支持多租户、动态权限、多标签页缓存的高性能管理后台]
+[描述系统解决什么问题]
 
-## 2. 核心技术栈 (2026 Golden Stack)
+## 2. 核心技术栈
 - **Runtime**: React 19 + Vite + TS
-- **Routing**: TanStack Router (Type-safe)
-- **Data Fetching**: TanStack Query v5 + Axios
-- **State**: Zustand (with Persist)
-- **UI**: Tailwind CSS + Shadcn UI + Lucide React
-- **Validation**: Zod + React Hook Form
-- **Caching**: React Activation (Keep-alive)
-
-## 3. 环境变量
-- `NEXT_PUBLIC_API_URL`: 后端网关地址
+- **Routing**: TanStack Router
+- **Data Fetching**: TanStack Query v5
+- **UI**: Tailwind CSS + Shadcn UI
+- **Design Source**: Figma (Enabled via MCP)
 ```
 
 ---
@@ -52,23 +47,13 @@
 ```markdown
 # 架构设计蓝图
 
-## 1. 模块化目录职责 (Feature-Based)
-- `src/api/`: 全局 Axios 实例与拦截器配置。
-- `src/components/layout/`: 侧边栏、顶栏、多标签页 (TabsBar) 实现。
-- `src/modules/`: **核心业务模块**。每个子文件夹（如 `/user`）包含：
-  - `components/`: 该模块特有组件。
-  - `api.ts`: 模块请求函数。
-  - `schema.ts`: Zod 校验规则。
-  - `index.tsx`: 页面入口（包裹 KeepAlive）。
-- `src/routes/`: TanStack Router 定义（包含 `__root.tsx` 布局与 `_auth.tsx` 保安路由）。
+## 1. 模块化目录职责
+- `src/modules/`: 核心业务模块。
+- `src/routes/`: 路由定义。
 
 ## 2. 核心机制设计
-- **身份验证 (Auth Guard)**: 在 `_auth.tsx` 中拦截请求。未登录重定向至 `/login`；无权限重定向至 `/403`。
-- **状态保持 (Keep-alive)**: 切换标签页时，利用 `React Activation` 缓存组件状态。
-- **多标签页 (Tabs)**: Zustand 存储当前已打开的路由数组，关闭标签时需调用 `dropScope` 清理缓存。
-
-## 3. 错误边界 (Error Boundary)
-- 路由层使用 TanStack Router 的 `errorComponent` 捕获模块级崩溃，保持侧边栏可操作。
+- **身份验证**: `_auth.tsx` 保安路由。
+- **状态保持**: `React Activation` 缓存。
 ```
 
 ---
@@ -81,17 +66,10 @@
 # 开发约定
 
 ## 1. 命名与规范
-- **路由文件**: 必须遵循 TanStack Router 的文件路由规范。
-- **样式**: 严禁在代码中写硬编码颜色，必须使用 Tailwind 变量。
+- 路由必须遵循 TanStack Router 规范。
 
-## 2. 数据安全 (Zod First)
-- **所有 API 返回值必须通过 Zod Schema 校验**。
-- 格式：`const data = OrderSchema.parse(response.data)`。
-- 目的：在开发阶段捕捉后端字段变更，防止线上悄悄崩溃。
-
-## 3. 异步处理
-- 所有 Mutation 操作必须显示全局 Loading 和 Sonner 消息提示。
-- 401 错误由 Axios 响应拦截器统一处理（清空 Token + 跳转登录）。
+## 2. 数据安全
+- 所有接口必须经过 Zod Schema 校验。
 ```
 
 ---
@@ -103,45 +81,30 @@
 ```markdown
 # API 契约与数据模型
 
-## 1. 响应结构
-```typescript
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: { code: string; message: string };
-}
-```
-
-## 2. Zod Schema 示例
-```typescript
-const UserSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  roles: z.array(z.string())
-});
-```
-
-## 3. 用户与权限
-- `GET /api/v1/user/info`: 获取当前用户信息及权限 Code 列表。
+## 1. 响应结构定义
+...
 ```
 
 ---
 
-## 🎨 5. UI_SPEC.md (视觉与交互)
+## 🎨 5. UI_SPEC.md (视觉与交互 - Figma MCP 集成)
 
 ### 模版内容示例：
 
 ```markdown
-# UI 规范与交互细节
+# UI 规范与设计源 (Design Source)
 
-## 1. 设计系统
-- **配色**: Shadcn UI 默认主题 (Dark/Light 适配)。
-- **间距**: 严格遵循 Tailwind 阶梯 (p-4, m-2 等)。
+## 1. Figma 联动配置 (MCP)
+- **Design URL**: [粘贴你的 Figma 文件链接]
+- **MCP Action**: 请使用 Figma MCP 插件读取上述 URL 中的 `Tokens` 和 `Components`。
+- **真相源声明**: 当本文件中的描述与 Figma 设计稿冲突时，以 **Figma 设计稿中的 CSS Inspect 数据**为准。
 
-## 2. 反馈机制
-- **Button**: 提交中显示 Spinner，且 `disabled=true`。
-- **Skeleton**: 表格加载中展示 5 行骨架屏占位。
-- **Tabs**: 标签页超出容器宽度时支持鼠标滚轮横向滚动。
+## 2. 设计变量同步
+- **Colors/Typography**: 请优先从 Figma 的 Local Styles 中读取。
+- **Spacing**: 严格遵守 Figma 中的 Auto Layout 间距，转化为 Tailwind 的对应阶梯（如 16px -> p-4）。
+
+## 3. 交互行为
+- 所有图标优先使用 `Lucide React`，如果 Figma 中使用了自定义图标，请通过 MCP 提取 SVG 代码。
 ```
 
 ---
@@ -153,27 +116,26 @@ const UserSchema = z.object({
 ```markdown
 # 🛠 迭代清单
 
+## Phase 0: 设计对齐 (MCP Setup) [Priority: P0]
+- [ ] 运行 Figma MCP 扫描指定设计稿 URL
+- [ ] 导出全局 Design Tokens (Colors, Font Sizes) 并同步至 `tailwind.config.js`
+- [ ] 验证原子组件（Button, Input）与 Figma 视觉稿的一致性
+
 ## Phase 1: 系统骨架 (P0)
-- [ ] 初始化 Vite + TS + TanStack Router 环境
-- [ ] 配置 Axios 拦截器与 Zustand 持久化存储
-- [ ] 搭建 `__root.tsx` (侧边栏 + 顶栏 + 标签栏)
+- [ ] 初始化 Vite + TanStack Router
+- [ ] 搭建 `__root.tsx` 布局
 
-## Phase 2: 权限与登录 (P0)
-- [ ] 实现登录页逻辑与 `_auth.tsx` 保安路由
-- [ ] 接入 `MSW` 模拟用户信息接口
-
-## Phase 3: 业务模块 (P1)
-- [ ] 开发用户管理模块（包含列表、分页、Zod 校验）
-- [ ] 实现标签页缓存逻辑 (React Activation)
+## Phase 2: 业务开发 (P1)
+- [ ] 根据 Figma 中的 Page 设计稿实现登录页逻辑
+- [ ] 实现模块化业务页面，并确保响应式断点与 Figma 标注一致
 ```
 
 ---
 
 ## 🚩 架构师终极自查表
 
-1. **类型安全**：`TanStack Router` 的路由参数是否有类型推导？
-2. **数据防腐**：接口返回是否经过了 `Zod` 校验？
-3. **用户体验**：切换标签页时，之前的填单内容是否丢失（Keep-alive）？
-4. **容错能力**：某个页面挂了，侧边栏还能点吗？
+1. **视觉还原度**: 是否已通过 MCP 读取了 Figma 最新的边距、颜色和阴影？
+2. **类型安全**: 接口返回是否经过了 Zod 校验？
+3. **性能**: 是否实现了 Keep-alive 缓存？
 
 ---
