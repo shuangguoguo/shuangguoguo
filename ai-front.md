@@ -1,13 +1,13 @@
-🚀 前端项目 AI 协作全栈手册 (Architecture-First Template)
-本手册定义了与 AI 协作从零构建生产级前端系统的标准协议。每个文件都应作为独立的 .md 存在于项目根目录下。
-🤖 0. 启动指令 (The Master Prompt)在开始任何代码生成前，请先将以下内容发给 AI："你现在是一名精通常驻架构的前端专家。我已经为你准备了 6 份核心文档（README, ARCHITECTURE, CONVENTIONS, API_CONTRACT, UI_SPEC, TASK）。
-你的工作流程如下：
-理解阶段： 先阅读所有文档，指出潜在冲突。
-执行阶段： 严格按照 TASK.md 的 Phase 顺序执行。
-合规检查： 每完成一个任务，必须对照 CONVENTIONS.md 自检。
-实时同步： 更新 TASK.md 进度后再进行下一步。
-特别注意： 本项目采用 React 19 + TanStack Router，请确保所有路由和数据流都是类型安全的。"
-📑 1. README.md (项目总纲)
+🚀 前端项目 AI 协作全栈手册 (Architecture-First Template)  
+本手册定义了与 AI 协作从零构建生产级前端系统的标准协议。每个文件都应作为独立的 .md 存在于项目根目录下。  
+🤖 0. 启动指令 (The Master Prompt)在开始任何代码生成前，请先将以下内容发给 AI："你现在是一名精通常驻架构的前端专家。我已经为你准备了 6 份核心文档（README, ARCHITECTURE, CONVENTIONS, API_CONTRACT, UI_SPEC, TASK）。  
+你的工作流程如下：  
+理解阶段： 先阅读所有文档，指出潜在冲突。  
+执行阶段： 严格按照 TASK.md 的 Phase 顺序执行。  
+合规检查： 每完成一个任务，必须对照 CONVENTIONS.md 自检。  
+实时同步： 更新 TASK.md 进度后再进行下一步。  
+特别注意： 本项目采用 React 19 + TanStack Router，请确保所有路由和数据流都是类型安全的。  
+📑 1. README.md (项目总纲)  
 模版内容示例：
 ````markdown
 # 项目名称：[输入项目名] - 企业级后台管理系统
