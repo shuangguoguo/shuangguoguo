@@ -10,13 +10,14 @@
 
 > "你现在是一名精通常驻架构的前端专家。我已经为你准备了 6 份核心文档（README, ARCHITECTURE, CONVENTIONS, API_CONTRACT, UI_SPEC, TASK）。
 >
-> **你的工作流程如下：**
+> **你的工作流程如下（针对 MCP 调用次数进行了优化）：**
 >
 > 1. **理解阶段**：先阅读所有文档，指出潜在冲突。
-> 2. **环境自检**：检查是否已启用 **Figma MCP**。如果已启用，请在生成 UI 代码前调用 MCP 读取设计稿。
-> 3. **执行阶段**：严格按照 `TASK.md` 的 Phase 顺序执行。
+> 2. **一次性扫描 (Batch MCP Strategy)**：检查是否已启用 **Figma MCP**。如果已启用，请在 Phase 0 **一次性读取**所有必要的 Tokens、Icons 和核心页面布局，并将关键标注记录在 `UI_SPEC.md` 的缓存区，严禁在后续开发中重复调用。
+> 3. **执行阶段**：严格按照 `TASK.md` 的 Phase 顺序执行，UI 实现应参考已缓存的设计数据。
 > 4. **合规检查**：每完成一个任务，必须对照 `CONVENTIONS.md` 自检。
-> 5. **实时同步**：更新 `TASK.md` 进度后再进行下一步。"
+> 5. **实时同步**：更新 `TASK.md` 进度后再进行下一步。
+> 6. **特别注意**：本项目采用 React 19 + TanStack Router，请确保所有路由和数据流都是类型安全的。"
 
 ---
 
@@ -30,12 +31,18 @@
 ## 1. 业务目标
 [描述系统解决什么问题]
 
-## 2. 核心技术栈
+## 2. 核心技术栈 (2026 Golden Stack)
 - **Runtime**: React 19 + Vite + TS
-- **Routing**: TanStack Router
-- **Data Fetching**: TanStack Query v5
-- **UI**: Tailwind CSS + Shadcn UI
-- **Design Source**: Figma (Enabled via MCP)
+- **Routing**: TanStack Router (Type-safe)
+- **Data Fetching**: TanStack Query v5 + Axios
+- **State**: Zustand (with Persist)
+- **UI**: Tailwind CSS + Shadcn UI + Lucide React
+- **Validation**: Zod + React Hook Form
+- **Caching**: React Activation (Keep-alive)
+- **Design Source**: Figma (Optimized MCP Batching)
+
+## 3. 环境变量
+- `NEXT_PUBLIC_API_URL`: 后端网关地址
 ```
 
 ---
@@ -47,13 +54,19 @@
 ```markdown
 # 架构设计蓝图
 
-## 1. 模块化目录职责
-- `src/modules/`: 核心业务模块。
-- `src/routes/`: 路由定义。
+## 1. 模块化目录职责 (Feature-Based)
+- `src/api/`: 全局 Axios 实例与拦截器配置。
+- `src/components/layout/`: 侧边栏、顶栏、多标签页 (TabsBar) 实现。
+- `src/modules/`: **核心业务模块**。每个子文件夹（如 /user）包含特定的 api.ts, schema.ts 和页面。
+- `src/routes/`: TanStack Router 定义（包含 __root.tsx 布局与 _auth.tsx 保安路由）。
 
 ## 2. 核心机制设计
-- **身份验证**: `_auth.tsx` 保安路由。
-- **状态保持**: `React Activation` 缓存。
+- **身份验证 (Auth Guard)**: 在 `_auth.tsx` 中拦截，未登录重定向至 `/login`。
+- **状态保持 (Keep-alive)**: 利用 `React Activation` 缓存标签页组件状态。
+- **多标签页 (Tabs)**: Zustand 存储路由数组，关闭标签时需调用 `dropScope` 清理缓存。
+
+## 3. 错误边界 (Error Boundary)
+- 路由层使用 TanStack Router 的 `errorComponent` 保持侧边栏可操作。
 ```
 
 ---
@@ -66,10 +79,15 @@
 # 开发约定
 
 ## 1. 命名与规范
-- 路由必须遵循 TanStack Router 规范。
+- **路由文件**: 必须遵循 TanStack Router 的文件路由规范。
+- **样式**: 严禁硬编码颜色，必须使用 Tailwind 变量。
 
-## 2. 数据安全
-- 所有接口必须经过 Zod Schema 校验。
+## 2. 数据安全 (Zod First)
+- **所有 API 返回值必须通过 Zod Schema 校验**。
+- 格式：`const data = OrderSchema.parse(response.data)`。
+
+## 3. 异步处理
+- 401 错误由 Axios 响应拦截器统一处理（清空 Token + 跳转登录）。
 ```
 
 ---
@@ -82,29 +100,47 @@
 # API 契约与数据模型
 
 ## 1. 响应结构定义
-...
+```typescript
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  error?: { code: string; message: string };
+}
+```
+
+## 2. Zod Schema 示例
+```typescript
+const UserSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  roles: z.array(z.string())
+});
+```
 ```
 
 ---
 
-## 🎨 5. UI_SPEC.md (视觉与交互 - Figma MCP 集成)
+## 🎨 5. UI_SPEC.md (视觉与交互 - Figma MCP 优化版)
 
 ### 模版内容示例：
 
 ```markdown
 # UI 规范与设计源 (Design Source)
 
-## 1. Figma 联动配置 (MCP)
+## 1. Figma 联动配置 (MCP 节流模式)
 - **Design URL**: [粘贴你的 Figma 文件链接]
-- **MCP Action**: 请使用 Figma MCP 插件读取上述 URL 中的 `Tokens` 和 `Components`。
-- **真相源声明**: 当本文件中的描述与 Figma 设计稿冲突时，以 **Figma 设计稿中的 CSS Inspect 数据**为准。
+- **策略**: 仅在初始化时调用 MCP。
+- **真相源声明**: 以 **Figma Inspect 数据**为准。
 
-## 2. 设计变量同步
-- **Colors/Typography**: 请优先从 Figma 的 Local Styles 中读取。
-- **Spacing**: 严格遵守 Figma 中的 Auto Layout 间距，转化为 Tailwind 的对应阶梯（如 16px -> p-4）。
+## 2. 设计数据缓存 (Design Cache - 由 AI 扫描后填充)
+> 注意：AI 请将 Phase 0 读取到的数据记录在此，以减少重复调用。
+- **Tokens**: [在此记录 Colors, Typography, Shadow]
+- **Spacing**: [在此记录统一的间距阶梯]
+- **SVG Assets**: [在此提取关键 SVG 代码]
 
-## 3. 交互行为
-- 所有图标优先使用 `Lucide React`，如果 Figma 中使用了自定义图标，请通过 MCP 提取 SVG 代码。
+## 3. 设计变量同步
+- 优先从上述 **Design Cache** 中读取数据。
+- 严禁在没有明确指令的情况下反复调用 MCP。
 ```
 
 ---
@@ -116,26 +152,27 @@
 ```markdown
 # 🛠 迭代清单
 
-## Phase 0: 设计对齐 (MCP Setup) [Priority: P0]
-- [ ] 运行 Figma MCP 扫描指定设计稿 URL
-- [ ] 导出全局 Design Tokens (Colors, Font Sizes) 并同步至 `tailwind.config.js`
-- [ ] 验证原子组件（Button, Input）与 Figma 视觉稿的一致性
+## Phase 0: 深度扫描与数据持久化 (Single MCP Call) [Priority: P0]
+- [ ] 调用 Figma MCP 执行 Full Document Scan（读取所有样式）。
+- [ ] 将提取的 Tokens 写入 `tailwind.config.js`，同步数据至 `UI_SPEC.md`。
+- [ ] 离线化所有自定义图标。
 
 ## Phase 1: 系统骨架 (P0)
-- [ ] 初始化 Vite + TanStack Router
-- [ ] 搭建 `__root.tsx` 布局
+- [ ] 初始化 Vite + TanStack Router。
+- [ ] 搭建 `__root.tsx` (侧边栏 + 顶栏 + 标签栏)。
 
-## Phase 2: 业务开发 (P1)
-- [ ] 根据 Figma 中的 Page 设计稿实现登录页逻辑
-- [ ] 实现模块化业务页面，并确保响应式断点与 Figma 标注一致
+## Phase 2: 业务模块实现 (P1)
+- [ ] 开发用户管理模块（包含列表、分页、Zod 校验）。
+- [ ] 实现标签页缓存逻辑 (React Activation)。
 ```
 
 ---
 
 ## 🚩 架构师终极自查表
 
-1. **视觉还原度**: 是否已通过 MCP 读取了 Figma 最新的边距、颜色和阴影？
-2. **类型安全**: 接口返回是否经过了 Zod 校验？
-3. **性能**: 是否实现了 Keep-alive 缓存？
+1. **MCP 效率**: 是否实现了“一次读取，全程复用”？
+2. **类型安全**: 路由参数和 API 返回是否都有类型推导？
+3. **视觉还原度**: UI 是否严格对齐了缓存的设计数据？
+4. **性能**: 切换标签页时内容是否无损（Keep-alive）？
 
 ---
