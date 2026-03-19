@@ -1,13 +1,21 @@
 🚀 前端项目 AI 协作全栈手册 (Architecture-First Template)  
 本手册定义了与 AI 协作从零构建生产级前端系统的标准协议。每个文件都应作为独立的 .md 存在于项目根目录下。  
-🤖 0. 启动指令 (The Master Prompt)在开始任何代码生成前，请先将以下内容发给 AI："你现在是一名精通常驻架构的前端专家。我已经为你准备了 6 份核心文档（README, ARCHITECTURE, CONVENTIONS, API_CONTRACT, UI_SPEC, TASK）。  
+
+🤖 0. 启动指令 (The Master Prompt)  
+在开始任何代码生成前，请先将以下内容发给 AI：
+
+"你现在是一名精通常驻架构的前端专家。我已经为你准备了 6 份核心文档（README, ARCHITECTURE, CONVENTIONS, API_CONTRACT, UI_SPEC, TASK）。 
+
 你的工作流程如下：  
-理解阶段： 先阅读所有文档，指出潜在冲突。  
-执行阶段： 严格按照 TASK.md 的 Phase 顺序执行。  
-合规检查： 每完成一个任务，必须对照 CONVENTIONS.md 自检。  
-实时同步： 更新 TASK.md 进度后再进行下一步。  
-特别注意： 本项目采用 React 19 + TanStack Router，请确保所有路由和数据流都是类型安全的。  
-📑 1. README.md (项目总纲)  
+
+1. 理解阶段： 先阅读所有文档，指出潜在冲突。
+2. 执行阶段： 严格按照 TASK.md 的 Phase 顺序执行。
+3. 合规检查： 每完成一个任务，必须对照 CONVENTIONS.md 自检。
+4. 实时同步： 更新 TASK.md 进度后再进行下一步。
+5. 特别注意： 本项目采用 React 19 + TanStack Router，请确保所有路由和数据流都是类型安全的。"
+
+##📑 1. README.md (项目总纲)  
+
 模版内容示例：
 ````markdown
 # 项目名称：[输入项目名] - 企业级后台管理系统
@@ -27,7 +35,9 @@
 ## 3. 环境变量
 - `NEXT_PUBLIC_API_URL`: 后端网关地址
 ````
-🏗️ 2. ARCHITECTURE.md (架构蓝图)
+
+##🏗️ 2. ARCHITECTURE.md (架构蓝图)
+
 模版内容示例：
 ````markdown
 # 架构设计蓝图
@@ -49,7 +59,9 @@
 ## 3. 错误边界 (Error Boundary)
 - 路由层使用 TanStack Router 的 `errorComponent` 捕获模块级崩溃，保持侧边栏可操作。
 ````
-📏 3. CONVENTIONS.md (开发规范)
+
+##📏 3. CONVENTIONS.md (开发规范)
+
 模版内容示例：
 ````markdown
 # 开发约定
@@ -67,7 +79,9 @@
 - 所有 Mutation 操作必须显示全局 Loading 和 Sonner 消息提示。
 - 401 错误由 Axios 响应拦截器统一处理（清空 Token + 跳转登录）。
 ````
-🔌 4. API_CONTRACT.md (接口契约)
+
+##🔌 4. API_CONTRACT.md (接口契约)
+
 模版内容示例：
 ````markdown
 # API 契约与数据模型
@@ -117,8 +131,9 @@ interface ApiResponse<T> {
 - [ ] 开发用户管理模块（包含列表、分页、Zod 校验）
 - [ ] 实现标签页缓存逻辑 (React Activation)
 ````
+
 🚩 架构师终极自查表类型安全: 
-TanStack Router 的路由参数是否有类型推导？
-数据防腐: 接口返回是否经过了 Zod 校验？
-用户体验: 切换标签页时，之前的填单内容是否丢失（Keep-alive）？
-容错能力: 某个页面挂了，侧边栏还能点吗？
+1. TanStack Router 的路由参数是否有类型推导？
+2. 数据防腐: 接口返回是否经过了 Zod 校验？
+3. 用户体验: 切换标签页时，之前的填单内容是否丢失（Keep-alive）？
+4. 容错能力: 某个页面挂了，侧边栏还能点吗？
