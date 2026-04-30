@@ -51,3 +51,13 @@
     * **`react-copy-to-clipboard`**: 快捷实现剪贴板复制功能。
     * **`web-storage-cache`**: 增强型本地存储缓存，支持有效期设置。
     * **`version-polling`**: 实时监测前端版本更新并提醒。
+
+ plugin-web-update-notification 负责检测项目部署代码更新，提示用户刷新页面。
+
+
+
+
+
+
+
+
