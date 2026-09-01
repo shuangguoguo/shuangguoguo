@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动态作业指南</title>
+    <style>
+        :root {
+            --bg-color: #12151f;
+            --panel-bg: #1e2233;
+            --text-main: #e0e6ed;
+            --text-muted: #8b949e;
+            --theme-green: #10b981;
+            --theme-green-hover: #059669;
+            --win-color: #10b981;
+            --lose-color: #ef4444;
+            --warn-color: #f59e0b;
+            --draw-color: #6b7280;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%; max-width: 500px; background-color: var(--panel-bg);
+            border-radius: 12px; padding: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center; font-size: 20px; margin-top: 0;
+            border-bottom: 1px solid #333; padding-bottom: 15px; color: var(--theme-green);
+        }
+        .setup-section, .game-section { display: flex; flex-direction: column; gap: 15px; }
+        .game-section { display: none; }
+        
+        label { font-size: 14px; color: var(--text-muted); display: block; margin-bottom: 5px;}
+        input {
+            width: 100%; padding: 12px; background-color: #0d1117;
+            border: 1px solid #30363d; color: white; border-radius: 6px;
+            font-size: 18px; box-sizing: border-box;
+        }
+        input:focus { outline: none; border-color: var(--theme-green); }
+        
+        /* 战绩汇总面板 */
+        .summary-board {
+            background: linear-gradient(145deg, #1a1f2e, #23293d);
+            border: 1px solid #3b4252; border-radius: 8px; padding: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .summary-item { text-align: center; }
+        .summary-item span { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;}
+        .summary-item strong { font-size: 18px; }
+        .pl-positive { color: var(--win-color); }
+        .pl-negative { color: var(--lose-color); }
+        .pl-zero { color: white; }
+
+        .status-board {
+            background-color: #0d1117; padding: 12px; border-radius: 8px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            text-align: center; border: 1px solid #30363d;
+        }
+        .status-item > span { display: block; font-size: 12px; color: var(--text-muted); }
+        .status-item strong { font-size: 16px; }
+        
+        .action-board { text-align: center; padding: 10px 0; }
+        .action-board span { color: var(--text-muted); font-size: 14px; }
+        .next-bet-amount {
+            font-size: 48px; font-weight: bold; color: var(--theme-green);
+            margin: 5px 0 15px 0; text-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+        }
+        
+        .sp-input-group {
+            background-color: #2a3143; padding: 10px; border-radius: 8px;
+            border: 1px solid #3b4252; margin-bottom: 15px;
+        }
+        .sp-input-group input { font-size: 16px; padding: 8px; text-align: center; color: var(--warn-color); font-weight: bold;}
+        
+        button {
+            padding: 14px; border: none; border-radius: 8px;
+            font-size: 16px; font-weight: bold; cursor: pointer;
+            transition: all 0.2s; color: white;
+        }
+        button:active { transform: scale(0.98); }
+        .btn-primary { background-color: var(--theme-green); width: 100%; }
+        .btn-primary:hover { background-color: var(--theme-green-hover); }
+        
+        /* 5个按钮的网格布局 */
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-win { background-color: var(--win-color); }
+        .btn-win-half { background-color: #059669; }
+        .btn-draw { background-color: var(--draw-color); grid-column: span 2; padding: 10px;} /* 走水按钮占满一行 */
+        .btn-lose-half { background-color: #d97706; }
+        .btn-lose { background-color: var(--lose-color); }
+        
+        .btn-reset { background-color: #4b5563; width: 100%; margin-top: 15px;}
+        .btn-reset:hover { background-color: #374151; }
+        
+        .log-container {
+            background-color: #0d1117; border-radius: 8px; border: 1px solid #30363d;
+            display: flex; flex-direction: column; margin-top: 10px;
+        }
+        .log-header {
+            padding: 8px 12px; font-size: 12px; color: var(--text-muted);
+            border-bottom: 1px solid #30363d; background-color: #161b22;
+            border-radius: 8px 8px 0 0;
+        }
+        .log-area { padding: 10px; height: 220px; overflow-y: auto; font-size: 13px; }
+        
+        /* 日志样式区分 */
+        .log-entry { margin-bottom: 10px; line-height: 1.5; }
+        .log-time { color: #8b949e; font-size: 11px; margin-bottom: 2px;}
+        .log-result-box {
+            background-color: rgba(255,255,255,0.05); border-left: 3px solid #6b7280;
+            padding: 6px 10px; border-radius: 0 4px 4px 0; margin-bottom: 4px;
+        }
+        .log-action-box {
+            background-color: rgba(16, 185, 129, 0.1); border-left: 3px solid var(--theme-green);
+            padding: 6px 10px; border-radius: 0 4px 4px 0; color: #34d399; font-weight: bold;
+        }
+        
+        .alert {
+            padding: 15px; border-radius: 8px; text-align: center;
+            font-weight: bold; display: none; margin-bottom: 15px;
+        }
+        .alert-success { background-color: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }
+        .alert-danger { background-color: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+        .alert-warning { background-color: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #f59e0b; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📊 动态作业指南</h1>
+
+    <!-- 设置界面 -->
+    <div class="setup-section" id="setup-section">
+        <div>
+            <label>请输入准备入场的总本金 (元)</label>
+            <input type="number" id="input-bankroll" value="1000" placeholder="例如: 1000">
+        </div>
+        <button class="btn-primary" onclick="startGame()">开始执行策略</button>
+        <p style="font-size: 12px; color: #8b949e; text-align: center;">
+            系统将自动按比例计算：<br>首单20% | 止盈1.25倍 | 止损0.5倍<br>
+            <span style="color: var(--theme-green);">进度自动保存，刷新不丢失</span>
+        </p>
+    </div>
+
+    <!-- 游戏界面 -->
+    <div class="game-section" id="game-section">
+        
+        <!-- 新增：战绩汇总面板 -->
+        <div class="summary-board">
+            <div class="summary-item">
+                <span>初始本金</span>
+                <strong id="sum-initial" style="color: white;">1000</strong>
+            </div>
+            <div class="summary-item">
+                <span>当前余额</span>
+                <strong id="sum-current" style="color: white;">1000</strong>
+            </div>
+            <div class="summary-item">
+                <span>今日总盈亏</span>
+                <strong id="sum-pl" class="pl-zero">0.00</strong>
+            </div>
+        </div>
+
+        <div class="status-board">
+            <div class="status-item">
+                <span>当前进度</span>
+                <strong>第 <span id="display-step" style="color: var(--theme-green);">1</span> / 6 单</strong>
+            </div>
+            <div class="status-item">
+                <span>风控红线</span>
+                <span style="font-size: 12px; color: #8b949e; margin-top:2px;">
+                    止盈: <span id="display-kpi" style="color:var(--win-color)">1250</span> | 
+                    止损: <span id="display-stop" style="color:var(--lose-color)">500</span>
+                </span>
+            </div>
+        </div>
+
+        <div id="game-over-message" class="alert"></div>
+
+        <div class="action-board" id="action-board">
+            <span>👇 下一单请严格投入 👇</span>
+            <div class="next-bet-amount" id="display-next-bet">200</div>
+            
+            <div class="sp-input-group">
+                <label for="input-sp">✍️ 请输入本场净赔率 (SP)</label>
+                <input type="number" id="input-sp" step="0.01" value="0.90" placeholder="例如: 0.85, 0.95">
+            </div>
+            
+            <div class="btn-grid" id="action-buttons">
+                <button class="btn-win" onclick="processResult('WIN_FULL')">全赢</button>
+                <button class="btn-win-half" onclick="processResult('WIN_HALF')">赢一半</button>
+                <button class="btn-draw" onclick="processResult('DRAW')">走水 (退本)</button>
+                <button class="btn-lose-half" onclick="processResult('LOSE_HALF')">输一半</button>
+                <button class="btn-lose" onclick="processResult('LOSE_FULL')">全输</button>
+            </div>
+        </div>
+
+        <div class="log-container">
+            <div class="log-header">📝 操作与决策日志 (最新在最上)</div>
+            <div class="log-area" id="log-area">
+                <!-- 日志输出 -->
+            </div>
+        </div>
+
+        <button class="btn-reset" onclick="resetGame()">🔄 重新开始新一轮 (清除记录)</button>
+    </div>
+</div>
+
+<script>
+    // 核心变量状态
+    let state = {
+        initialBankroll: 1000,
+        currentBankroll: 1000,
+        currentStep: 1,
+        currentBet: 200,
+        scale: 1,
+        isGameOver: false,
+        logsHTML: '',
+        lastSP: 0.90
+    };
+
+    const STORAGE_KEY = 'trading_system_state_v4';
+
+    // 注码调整乘数 (风控规则)
+    const NEXT_BET_MULTIPLIERS = {
+        'WIN_FULL': 0.5,  // 全赢砍半防守
+        'WIN_HALF': 0.8,  // 赢半微调防守
+        'DRAW': 1.0,      // 走水维持原注码
+        'LOSE_HALF': 1.2, // 输半温和补偿
+        'LOSE_FULL': 1.5  // 全输强力补偿
+    };
+
+    window.onload = function() {
+        let savedState = localStorage.getItem(STORAGE_KEY);
+        if (savedState) {
+            state = JSON.parse(savedState);
+            restoreUI();
+        }
+    };
+
+    function saveState() {
+        state.logsHTML = document.getElementById('log-area').innerHTML;
+        let currentSPInput = parseFloat(document.getElementById('input-sp').value);
+        if (!isNaN(currentSPInput)) { state.lastSP = currentSPInput; }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function getFormattedTime() {
+        let now = new Date();
+        let hh = String(now.getHours()).padStart(2, '0');
+        let min = String(now.getMinutes()).padStart(2, '0');
+        let ss = String(now.getSeconds()).padStart(2, '0');
+        return `${hh}:${min}:${ss}`;
+    }
+
+    function startGame() {
+        let inputVal = parseFloat(document.getElementById('input-bankroll').value);
+        if (isNaN(inputVal) || inputVal <= 0) {
+            alert("请输入有效的本金！");
+            return;
+        }
+        
+        state.initialBankroll = inputVal;
+        state.scale = state.initialBankroll / 1000;
+        state.currentBankroll = state.initialBankroll;
+        state.currentStep = 1;
+        state.currentBet = Math.round(200 * state.scale);
+        state.isGameOver = false;
+        state.logsHTML = '';
+        state.lastSP = 0.90;
+
+        document.getElementById('log-area').innerHTML = '';
+        
+        // 初始日志：只输出第一单的指示
+        logAction(`🟢 策略启动！初始本金: ${state.initialBankroll}元。`, `👉 第 1 单请投入: ${state.currentBet} 元`);
+        
+        restoreUI();
+    }
+
+    function processResult(resultType) {
+        if (state.isGameOver) return;
+
+        let spInput = parseFloat(document.getElementById('input-sp').value);
+        if (isNaN(spInput) || spInput <= 0) {
+            alert("请输入正确的赔率 (SP)！");
+            return;
+        }
+        state.lastSP = spInput;
+
+        // 1. 严格的盈亏计算逻辑
+        let profit = 0;
+        if (resultType === 'WIN_FULL') {
+            profit = state.currentBet * spInput;
+        } else if (resultType === 'WIN_HALF') {
+            profit = state.currentBet * (spInput / 2); // 赢一半：看赔率
+        } else if (resultType === 'DRAW') {
+            profit = 0; // 走水：不输不赢
+        } else if (resultType === 'LOSE_HALF') {
+            profit = -(state.currentBet / 2); // 输一半：绝对不看赔率，固定扣一半本金
+        } else if (resultType === 'LOSE_FULL') {
+            profit = -state.currentBet; // 全输：扣全部本金
+        }
+
+        // 更新余额并处理精度
+        state.currentBankroll += profit;
+        state.currentBankroll = Math.round(state.currentBankroll * 100) / 100; 
+
+        let resultText = {
+            'WIN_FULL': '全赢', 'WIN_HALF': '赢一半', 'DRAW': '走水',
+            'LOSE_HALF': '输一半', 'LOSE_FULL': '全输'
+        }[resultType];
+        
+        let profitText = profit > 0 ? `+${profit.toFixed(2)}` : profit.toFixed(2);
+        if (profit === 0) profitText = "0.00";
+
+        // 2. 记录【本单结果】日志 (先输出结果)
+        let resultLogMsg = `第 ${state.currentStep} 单结算: 投入 ${state.currentBet}元 (SP:${spInput})<br>结果 [${resultText}]，盈亏 <b>${profitText}</b> 元。<br>当前总余额: ${state.currentBankroll} 元。`;
+        logResult(resultLogMsg);
+
+        // 3. 检查是否触发全局红线
+        let targetKpi = 1250 * state.scale;
+        let stopLoss = 500 * state.scale;
+
+        if (state.currentBankroll >= targetKpi) {
+            endGame(`🎉 达成KPI！当前资金 ${state.currentBankroll} 已达标。请立即关机离场！`, 'success');
+            return;
+        }
+        if (state.currentBankroll <= stopLoss) {
+            endGame(`⚠️ 触发绝对熔断！当前资金 ${state.currentBankroll} 跌破底线。请严格止损离场！`, 'danger');
+            return;
+        }
+        if (state.currentStep >= 6) {
+            endGame(`🛑 1-6单全流程结束！当前资金 ${state.currentBankroll}。无论盈亏，今日操作结束！`, 'warning');
+            return;
+        }
+
+        // 4. 计算下一单注码
+        state.currentStep++;
+        let nextBetRaw = state.currentBet * NEXT_BET_MULTIPLIERS[resultType];
+        state.currentBet = Math.round(nextBetRaw / 10) * 10; // 按10元取整
+
+        if (state.currentBet > state.currentBankroll) {
+            state.currentBet = Math.floor(state.currentBankroll);
+        }
+        let minBet = Math.max(10, Math.round(10 * state.scale));
+        if (state.currentBet < minBet) {
+            state.currentBet = minBet;
+        }
+
+        // 5. 记录【下一单指示】日志 (后输出指示)
+        logAction(`分析完毕。未触及红线，继续执行。`, `👉 第 ${state.currentStep} 单建议投入: ${state.currentBet} 元`);
+        
+        updateUI();
+        saveState();
+    }
+
+    function restoreUI() {
+        document.getElementById('setup-section').style.display = 'none';
+        document.getElementById('game-section').style.display = 'flex';
+        
+        document.getElementById('display-kpi').innerText = Math.round(1250 * state.scale);
+        document.getElementById('display-stop').innerText = Math.round(500 * state.scale);
+        document.getElementById('input-sp').value = state.lastSP || 0.90;
+        document.getElementById('log-area').innerHTML = state.logsHTML;
+
+        if (state.isGameOver) {
+           document.getElementById('action-board').style.display = 'none';
+        } else {
+            document.getElementById('action-board').style.display = 'block';
+            document.getElementById('game-over-message').style.display = 'none';
+        }
+        updateUI();
+        saveState();
+    }
+
+    function updateUI() {
+        // 更新基础状态
+        document.getElementById('sum-current').innerText = state.currentBankroll;
+        document.getElementById('display-step').innerText = state.currentStep;
+        if(!state.isGameOver) {
+            document.getElementById('display-next-bet').innerText = state.currentBet;
+        }
+
+        // 更新战绩汇总面板
+        document.getElementById('sum-initial').innerText = state.initialBankroll;
+        
+        let pl = state.currentBankroll - state.initialBankroll;
+        let plElement = document.getElementById('sum-pl');
+        
+        if (pl > 0) {
+            plElement.innerText = "+" + pl.toFixed(2);
+            plElement.className = "pl-positive";
+        } else if (pl < 0) {
+            plElement.innerText = pl.toFixed(2);
+            plElement.className = "pl-negative";
+        } else {
+            plElement.innerText = "0.00";
+            plElement.className = "pl-zero";
+        }
+    }
+
+    function endGame(message, type) {
+        state.isGameOver = true;
+        document.getElementById('action-board').style.display = 'none';
+        
+        let msgDiv = document.getElementById('game-over-message');
+        msgDiv.style.display = 'block';
+        msgDiv.innerText = message;
+        msgDiv.className = `alert alert-${type}`;
+        
+        logAction("🛑 流程终止", message);
+        updateUI();
+        saveState();
+    }
+
+    // 专门用于输出【结算结果】的日志 (灰色框)
+    function logResult(msg) {
+        let logArea = document.getElementById('log-area');
+        let entry = document.createElement('div');
+        entry.className = 'log-entry';
+        let timeStr = getFormattedTime();
+        
+        entry.innerHTML = `
+            <div class="log-time">[${timeStr}] 结算记录</div>
+            <div class="log-result-box">${msg}</div>
+        `;
+        logArea.prepend(entry); 
+        state.logsHTML = logArea.innerHTML; 
+    }
+
+    // 专门用于输出【下一步指示】的日志 (绿色高亮框)
+    function logAction(contextMsg, actionMsg) {
+        let logArea = document.getElementById('log-area');
+        let entry = document.createElement('div');
+        entry.className = 'log-entry';
+        let timeStr = getFormattedTime();
+        
+        entry.innerHTML = `
+            <div class="log-time">[${timeStr}] 系统指示</div>
+            <div style="font-size:12px; color:#8b949e; margin-bottom:4px;">${contextMsg}</div>
+            <div class="log-action-box">${actionMsg}</div>
+        `;
+        logArea.prepend(entry); 
+        state.logsHTML = logArea.innerHTML; 
+    }
+
+    function resetGame() {
+        if(confirm("确定要清除当前所有记录，重新开始吗？")) {
+            localStorage.removeItem(STORAGE_KEY);
+            document.getElementById('setup-section').style.display = 'flex';
+            document.getElementById('game-section').style.display = 'none';
+            document.getElementById('game-over-message').style.display = 'none';
+            document.getElementById('log-area').innerHTML = '';
+            document.getElementById('input-sp').value = 0.90;
+        }
+    }
+</script>
+
+</body>
+</html>
